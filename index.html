@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CardioQuest - SMP Negeri 2 Belang</title>
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Firebase SDK (Version 9+ Modular via CDN) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getDatabase, ref, push, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+        // Konfigurasi Firebase Milik Proyek Anda
+        const firebaseConfig = {
+            apiKey: "AIzaSyD1Ic8aw3178L2YNuOl2VbjqPYLwDomz8Q",
+            authDomain: "cardioquest-smp2belang.firebaseapp.com",
+            databaseURL: "https://cardioquest-smp2belang-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "cardioquest-smp2belang",
+            storageBucket: "cardioquest-smp2belang.firebasestorage.app",
+            messagingSenderId: "1036911565645",
+            appId: "1:1036911565645:web:003d4dc394d841f7ffb504"
+        };
+
+        // Inisialisasi Firebase
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+
+        // Ekspor fungsi Firebase ke window global agar bisa dipakai di JS biasa
+        window.dbRef = ref;
+        window.dbPush = push;
+        window.dbOnValue = onValue;
+        window.dbInstance = database;
+    </script>
+
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #31102f 100%);
+            color: #f8fafc;
+            min-height: 100vh;
+        }
+
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.75);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+        }
+
+        .glow-red {
+            box-shadow: 0 0 20px rgba(239, 68, 68, 0.4);
+        }
+
+        .glow-blue {
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.4);
+        }
+
+        .heart-pulse {
+            animation: pulse 1.2s infinite ease-in-out;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            15% { transform: scale(1.1); }
+            30% { transform: scale(1); }
+            45% { transform: scale(1.05); }
+            60% { transform: scale(1); }
+        }
+
+        .pulse-path {
+            stroke-dasharray: 10;
+            animation: dash 1s linear infinite;
+        }
+
+        @keyframes dash {
+            to {
+                stroke-dashoffset: -20;
+            }
+        }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen p-3 md:p-6 justify-between">
+
+    <!-- Header & Metadata -->
+    <header class="w-full max-w-5xl mx-auto glass-panel rounded-2xl p-4 mb-4 flex flex-col md:flex-row justify-between items-center gap-3 border-b-2 border-red-500/30">
+        <div class="flex items-center gap-3">
+            <div class="bg-red-500/20 p-3 rounded-xl border border-red-500/40 text-red-400">
+                <i class="fa-solid fa-heart-pulse text-2xl md:text-3xl heart-pulse"></i>
+            </div>
+            <div>
+                <h1 class="font-extrabold text-xl md:text-2xl bg-clip-text text-transparent bg-gradient-to-r from-red-400 via-pink-400 to-blue-400">
+                    CardioQuest
+                </h1>
+                <p class="text-xs text-slate-400 flex items-center gap-2">
+                    <span><i class="fa-solid fa-school text-red-400"></i> SMP Negeri 2 Belang</span> | 
+                    <span>IPA Kelas 8</span>
+                </p>
+            </div>
+        </div>
+
+        <!-- Status Kelompok Active -->
+        <div id="group-badge" class="hidden bg-slate-800/80 px-4 py-2 rounded-xl border border-slate-700 text-sm font-semibold flex items-center gap-3">
+            <span class="text-slate-400">Kelompok:</span>
+            <span id="display-group-name" class="text-emerald-400 font-bold"></span>
+            <span class="text-slate-500">|</span>
+            <span id="display-score" class="text-yellow-400 font-bold"><i class="fa-solid fa-star text-xs"></i> 0</span>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="w-full max-w-5xl mx-auto flex-grow flex flex-col justify-center">
+
+        <!-- SCREEN 1: KELOMPOK SELECTOR & INSTRUCTIONS -->
+        <section id="screen-register" class="glass-panel rounded-3xl p-6 md:p-10 text-center max-w-2xl mx-auto w-full space-y-6">
+            <div class="space-y-2">
+                <span class="bg-red-500/20 text-red-300 text-xs font-bold px-3 py-1 rounded-full border border-red-500/30">
+                    PETUALANGAN SISTEM PEREDARAN DARAH
+                </span>
+                <h2 class="text-2xl md:text-3xl font-bold text-white">Pilih Kelompok Belajar</h2>
+                <p class="text-sm text-slate-300">Pilih salah satu kelompok dari 5 kelompok yang terdaftar untuk memulai permainan.</p>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                <button onclick="selectGroup('Kelompok 1')" class="bg-slate-800/80 hover:bg-red-600/30 border border-slate-700 hover:border-red-500 text-white font-semibold py-3 px-4 rounded-xl transition flex items-center justify-between group">
+                    <span><i class="fa-solid fa-users text-red-400 mr-2 group-hover:scale-110 transition"></i> Kelompok 1</span>
+                    <i class="fa-solid fa-chevron-right text-xs opacity-50 group-hover:opacity-100"></i>
+                </button>
+                <button onclick="selectGroup('Kelompok 2')" class="bg-slate-800/80 hover:bg-red-600/30 border border-slate-700 hover:border-red-500 text-white font-semibold py-3 px-4 rounded-xl transition flex items-center justify-between group">
+                    <span><i class="fa-solid fa-users text-red-400 mr-2 group-hover:scale-110 transition"></i> Kelompok 2</span>
+                    <i class="fa-solid fa-chevron-right text-xs opacity-50 group-hover:opacity-100"></i>
+                </button>
+                <button onclick="selectGroup('Kelompok 3')" class="bg-slate-800/80 hover:bg-red-600/30 border border-slate-700 hover:border-red-500 text-white font-semibold py-3 px-4 rounded-xl transition flex items-center justify-between group">
+                    <span><i class="fa-solid fa-users text-red-400 mr-2 group-hover:scale-110 transition"></i> Kelompok 3</span>
+                    <i class="fa-solid fa-chevron-right text-xs opacity-50 group-hover:opacity-100"></i>
+                </button>
+                <button onclick="selectGroup('Kelompok 4')" class="bg-slate-800/80 hover:bg-red-600/30 border border-slate-700 hover:border-red-500 text-white font-semibold py-3 px-4 rounded-xl transition flex items-center justify-between group">
+                    <span><i class="fa-solid fa-users text-red-400 mr-2 group-hover:scale-110 transition"></i> Kelompok 4</span>
+                    <i class="fa-solid fa-chevron-right text-xs opacity-50 group-hover:opacity-100"></i>
+                </button>
+                <button onclick="selectGroup('Kelompok 5')" class="bg-slate-800/80 hover:bg-red-600/30 border border-slate-700 hover:border-red-500 text-white font-semibold py-3 px-4 rounded-xl transition sm:col-span-2 justify-between group">
+                    <span><i class="fa-solid fa-users text-red-400 mr-2 group-hover:scale-110 transition"></i> Kelompok 5</span>
+                    <i class="fa-solid fa-chevron-right text-xs opacity-50 group-hover:opacity-100"></i>
+                </button>
+            </div>
+
+            <!-- Leaderboard Mini View -->
+            <div class="pt-6 border-t border-slate-700/50">
+                <h3 class="text-sm font-bold text-slate-400 mb-3 flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-trophy text-yellow-400"></i> Leaderboard Real-Time (Firebase)
+                </h3>
+                <div id="mini-leaderboard" class="space-y-2 text-sm max-h-40 overflow-y-auto pr-1">
+                    <p class="text-xs text-slate-500 italic">Memuat data papan peringkat...</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- SCREEN 2: MATERI RANGKUMAN INTERAKTIF -->
+        <section id="screen-materi" class="hidden space-y-6">
+            <div class="glass-panel rounded-3xl p-6 md:p-8">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 border-b border-slate-700 pb-4">
+                    <div>
+                        <h2 class="text-xl md:text-2xl font-bold text-white flex items-center gap-2">
+                            <i class="fa-solid fa-book-open text-red-400"></i> Ringkasan Materi Peredaran Darah
+                        </h2>
+                        <p class="text-xs text-slate-400">Pelajari rute peredaran darah besar dan kecil sebelum memulai tantangan.</p>
+                    </div>
+                    <button onclick="startGame()" class="w-full md:w-auto bg-gradient-to-r from-red-500 to-pink-600 hover:from-red-600 hover:to-pink-700 text-white font-bold py-3 px-6 rounded-xl shadow-lg transition flex items-center justify-center gap-2 glow-red">
+                        Mulai Tantangan Game <i class="fa-solid fa-gamepad"></i>
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Peredaran Darah Kecil -->
+                    <div class="bg-slate-900/60 rounded-2xl p-5 border border-blue-500/30 space-y-3">
+                        <div class="flex items-center gap-3">
+                            <span class="w-8 h-8 rounded-lg bg-blue-500/20 text-blue-400 font-bold flex items-center justify-center border border-blue-500/40">1</span>
+                            <h3 class="font-bold text-lg text-blue-400">Peredaran Darah Kecil (Pulmonalis)</h3>
+                        </div>
+                        <p class="text-xs text-slate-300">Mengalirkan darah kaya **$\text{CO}_2$** dari jantung ke paru-paru untuk melepaskan $\text{CO}_2$ dan mengambil **$\text{O}_2$**.</p>
+                        <div class="bg-slate-800/80 p-3 rounded-xl border border-slate-700 text-xs space-y-1 font-mono">
+                            <p class="text-blue-300 font-bold">Jantung (Bilik Kanan)</p>
+                            <p class="text-slate-400"><i class="fa-solid fa-arrow-down text-blue-400 my-1"></i> Arteri Pulmonalis</p>
+                            <p class="text-emerald-300 font-bold">Paru-paru (Pertukaran Gas)</p>
+                            <p class="text-slate-400"><i class="fa-solid fa-arrow-down text-red-400 my-1"></i> Vena Pulmonalis</p>
+                            <p class="text-red-300 font-bold">Jantung (Serambi Kiri)</p>
+                        </div>
+                    </div>
+
+                    <!-- Peredaran Darah Besar -->
+                    <div class="bg-slate-900/60 rounded-2xl p-5 border border-red-500/30 space-y-3">
+                        <div class="flex items-center gap-3">
+                            <span class="w-8 h-8 rounded-lg bg-red-500/20 text-red-400 font-bold flex items-center justify-center border border-red-500/40">2</span>
+                            <h3 class="font-bold text-lg text-red-400">Peredaran Darah Besar (Sistemik)</h3>
+                        </div>
+                        <p class="text-xs text-slate-300">Mengalirkan darah kaya **$\text{O}_2$** dari jantung ke seluruh tubuh untuk menyuplai nutrisi dan mengambil residu **$\text{CO}_2$**.</p>
+                        <div class="bg-slate-800/80 p-3 rounded-xl border border-slate-700 text-xs space-y-1 font-mono">
+                            <p class="text-red-300 font-bold">Jantung (Bilik Kiri)</p>
+                            <p class="text-slate-400"><i class="fa-solid fa-arrow-down text-red-400 my-1"></i> Aorta & Arteri</p>
+                            <p class="text-amber-300 font-bold">Seluruh Tubuh (Organ/Sel)</p>
+                            <p class="text-slate-400"><i class="fa-solid fa-arrow-down text-blue-400 my-1"></i> Vena Cava</p>
+                            <p class="text-blue-300 font-bold">Jantung (Serambi Kanan)</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SCREEN 3: MINI GAME 1 - SUSUN URUTAN -->
+        <section id="game-1" class="hidden glass-panel rounded-3xl p-6 md:p-8 space-y-6">
+            <div class="flex justify-between items-center border-b border-slate-700 pb-4">
+                <div>
+                    <span class="bg-blue-500/20 text-blue-300 text-xs font-bold px-3 py-1 rounded-full border border-blue-500/30">
+                        MINI GAME 1 OF 3
+                    </span>
+                    <h2 class="text-xl font-bold text-white mt-1">Susun Urutan Peredaran Darah Kecil</h2>
+                </div>
+                <div class="text-right">
+                    <p class="text-xs text-slate-400">Poin Game 1</p>
+                    <p id="g1-score" class="text-lg font-bold text-yellow-400">0 Poin</p>
+                </div>
+            </div>
+
+            <!-- Petunjuk Permainan -->
+            <div class="bg-slate-800/60 p-4 rounded-xl border border-slate-700 text-xs text-slate-300 flex items-start gap-3">
+                <i class="fa-solid fa-circle-info text-blue-400 text-base mt-0.5"></i>
+                <p>Klik tombol organ di bawah secara berurutan sesuai rute <b>Peredaran Darah Kecil</b> (dari Jantung yang memompa darah kotor ke Paru-paru hingga kembali ke Jantung).</p>
+            </div>
+
+            <!-- Slot Jawaban terpilih -->
+            <div class="space-y-2">
+                <p class="text-xs font-bold text-slate-400">Urutan Pilihan Kelompok:</p>
+                <div id="g1-selected" class="min-h-[60px] bg-slate-900/80 p-3 rounded-2xl border-2 border-dashed border-slate-700 flex flex-wrap gap-2 items-center">
+                    <p class="text-xs text-slate-500 italic" id="g1-placeholder">Klik pilihan organ di bawah...</p>
+                </div>
+            </div>
+
+            <!-- Pilihan Organ -->
+            <div id="g1-options" class="flex flex-wrap gap-2 pt-2">
+                <!-- JS akan meletakkan opsi acak di sini -->
+            </div>
+
+            <div class="flex justify-between items-center pt-4 border-t border-slate-700">
+                <button onclick="resetGame1()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold py-2.5 px-4 rounded-xl transition">
+                    <i class="fa-solid fa-rotate-left mr-1"></i> Reset Urutan
+                </button>
+                <button onclick="checkGame1()" class="bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold py-2.5 px-6 rounded-xl transition glow-blue">
+                    Periksa Jawaban <i class="fa-solid fa-check ml-1"></i>
+                </button>
+            </div>
+        </section>
+
+        <!-- SCREEN 4: MINI GAME 2 - SIMULATOR NAVIGASI ELITROSIT -->
+        <section id="game-2" class="hidden glass-panel rounded-3xl p-6 md:p-8 space-y-6">
+            <div class="flex justify-between items-center border-b border-slate-700 pb-4">
+                <div>
+                    <span class="bg-red-500/20 text-red-300 text-xs font-bold px-3 py-1 rounded-full border border-red-500/30">
+                        MINI GAME 2 OF 3
+                    </span>
+                    <h2 class="text-xl font-bold text-white mt-1">Simulator Navigasi Sel Darah Merah</h2>
+                </div>
+                <div class="text-right">
+                    <p class="text-xs text-slate-400">Poin Game 2</p>
+                    <p id="g2-score" class="text-lg font-bold text-yellow-400">0 Poin</p>
+                </div>
+            </div>
+
+            <!-- Petunjuk Permainan -->
+            <div class="bg-slate-800/60 p-4 rounded-xl border border-slate-700 text-xs text-slate-300 flex items-start gap-3">
+                <i class="fa-solid fa-compass text-red-400 text-base mt-0.5"></i>
+                <p>Kamu adalah Sel Darah Merah! Kamu sedang berada di <b>Bilik Kiri Jantung</b> (membawa banyak $\text{O}_2$). Pilih jalur pembuluh darah yang benar untuk mengantarkan $\text{O}_2$ ke <b>Seluruh Tubuh</b>!</p>
+            </div>
+
+            <!-- Arena Simurasi Interactive -->
+            <div class="bg-slate-900 rounded-2xl p-6 border border-slate-700 text-center space-y-6 relative overflow-hidden">
+                <div id="sim-node" class="space-y-2">
+                    <div class="w-16 h-16 bg-red-500/20 border-2 border-red-500 rounded-full mx-auto flex items-center justify-center text-red-400 text-2xl heart-pulse">
+                        <i class="fa-solid fa-droplet"></i>
+                    </div>
+                    <h3 id="sim-title" class="font-bold text-lg text-white">Posisi: Bilik Kiri Jantung</h3>
+                    <p id="sim-desc" class="text-xs text-slate-400 max-w-md mx-auto">Darah kaya Oksigen ($\text{O}_2$) siap dipompa. Jalur pembuluh mana yang harus kamu lalui?</p>
+                </div>
+
+                <div id="sim-choices" class="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-md mx-auto">
+                    <!-- Ditentukan lewat JS -->
+                </div>
+            </div>
+        </section>
+
+        <!-- SCREEN 5: MINI GAME 3 - KUIS KILAT -->
+        <section id="game-3" class="hidden glass-panel rounded-3xl p-6 md:p-8 space-y-6">
+            <div class="flex justify-between items-center border-b border-slate-700 pb-4">
+                <div>
+                    <span class="bg-emerald-500/20 text-emerald-300 text-xs font-bold px-3 py-1 rounded-full border border-emerald-500/30">
+                        MINI GAME 3 OF 3
+                    </span>
+                    <h2 class="text-xl font-bold text-white mt-1">Kuis Kardiologi Kilat</h2>
+                </div>
+                <div class="text-right">
+                    <p class="text-xs text-slate-400">Soal Ke-</p>
+                    <p id="quiz-progress" class="text-lg font-bold text-emerald-400">1 / 3</p>
+                </div>
+            </div>
+
+            <div class="space-y-4">
+                <h3 id="quiz-question" class="text-lg font-bold text-white">Pertanyaan Kuis...</h3>
+                <div id="quiz-options" class="grid grid-cols-1 gap-3">
+                    <!-- Pilihan ganda JS -->
+                </div>
+            </div>
+        </section>
+
+        <!-- SCREEN 6: HASIL AKHIR & LEADERBOARD LENGKAP -->
+        <section id="screen-result" class="hidden glass-panel rounded-3xl p-6 md:p-10 text-center space-y-6 max-w-2xl mx-auto w-full">
+            <div class="space-y-2">
+                <div class="w-20 h-20 bg-yellow-500/20 border-2 border-yellow-500/40 rounded-full mx-auto flex items-center justify-center text-yellow-400 text-4xl mb-4">
+                    <i class="fa-solid fa-trophy"></i>
+                </div>
+                <h2 class="text-2xl md:text-3xl font-extrabold text-white">Petualangan Selesai!</h2>
+                <p id="result-group-text" class="text-sm text-slate-300">Selamat untuk Kelompok!</p>
+            </div>
+
+            <div class="bg-slate-900/80 p-5 rounded-2xl border border-slate-700 space-y-2">
+                <p class="text-xs text-slate-400 font-bold uppercase">Total Skor Akhir</p>
+                <p id="final-score" class="text-4xl font-extrabold text-yellow-400">0</p>
+            </div>
+
+            <!-- Leaderboard Realtime -->
+            <div class="text-left space-y-3 pt-4 border-t border-slate-700">
+                <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-list-ol text-red-400"></i> Papan Peringkat Kelas (Real-Time Cloud)
+                </h3>
+                <div id="full-leaderboard" class="space-y-2 text-sm max-h-56 overflow-y-auto pr-1">
+                    <!-- Realtime Data -->
+                </div>
+            </div>
+
+            <button onclick="location.reload()" class="w-full bg-slate-800 hover:bg-slate-700 text-white font-bold py-3 px-6 rounded-xl transition">
+                <i class="fa-solid fa-rotate mr-2"></i> Main Lagi / Ganti Kelompok
+            </button>
+        </section>
+
+    </main>
+
+    <!-- Footer Credits -->
+    <footer class="w-full max-w-5xl mx-auto text-center pt-6 pb-2 text-xs text-slate-500 border-t border-slate-800/60 mt-6">
+        <p>© 2026 SMP Negeri 2 Belang — Media Pembelajaran IPA Interaktif</p>
+        <p class="text-slate-400 mt-1">Created: <span class="text-red-400 font-semibold">Eijaz Pe Pak</span></p>
+    </footer>
+
+    <!-- LOGIKA JAVASCRIPT PERMAINAN -->
+    <script>
+        // State Global Game
+        let currentGroup = '';
+        let totalScore = 0;
+
+        // Data Organ untuk Game 1 (Peredaran Darah Kecil)
+        const g1CorrectOrder = ["Bilik Kanan", "Arteri Pulmonalis", "Paru-paru", "Vena Pulmonalis", "Serambi Kiri"];
+        let g1UserOrder = [];
+
+        // Data Kuis untuk Game 3
+        const quizData = [
+            {
+                q: "Pembuluh darah yang membawa darah kaya Oksigen (O2) dari paru-paru kembali ke jantung adalah...",
+                options: ["Vena Pulmonalis", "Arteri Pulmonalis", "Vena Cava", "Aorta"],
+                answer: 0
+            },
+            {
+                q: "Urutan peredaran darah besar yang benar adalah...",
+                options: [
+                    "Bilik Kiri -> Aorta -> Seluruh Tubuh -> Vena Cava -> Serambi Kanan",
+                    "Bilik Kanan -> Arteri Pulmonalis -> Paru-paru -> Serambi Kiri",
+                    "Serambi Kanan -> Seluruh Tubuh -> Aorta -> Bilik Kiri",
+                    "Paru-paru -> Vena Pulmonalis -> Bilik Kanan -> Aorta"
+                ],
+                answer: 0
+            },
+            {
+                q: "Fungsi utama dari Peredaran Darah Kecil adalah...",
+                options: [
+                    "Membersihkan CO2 dan mengambil O2 di paru-paru",
+                    "Mengedarkan nutrisi ke seluruh sel otak dan tubuh",
+                    "Memompa darah kotor ke seluruh tubuh",
+                    "Menyerap sari makanan di usus halus"
+                ],
+                answer: 0
+            }
+        ];
+        let currentQuizIndex = 0;
+
+        // 1. Pilih Kelompok
+        function selectGroup(groupName) {
+            currentGroup = groupName;
+            document.getElementById('display-group-name').innerText = currentGroup;
+            document.getElementById('group-badge').classList.remove('hidden');
+            
+            document.getElementById('screen-register').classList.add('hidden');
+            document.getElementById('screen-materi').classList.remove('hidden');
+        }
+
+        // 2. Mulai Game
+        function startGame() {
+            document.getElementById('screen-materi').classList.add('hidden');
+            document.getElementById('game-1').classList.remove('hidden');
+            initGame1();
+        }
+
+        // 3. Inisialisasi Game 1
+        function initGame1() {
+            g1UserOrder = [];
+            renderGame1();
+        }
+
+        function renderGame1() {
+            const selectedDiv = document.getElementById('g1-selected');
+            selectedDiv.innerHTML = '';
+
+            if (g1UserOrder.length === 0) {
+                selectedDiv.innerHTML = '<p class="text-xs text-slate-500 italic">Klik pilihan organ di bawah...</p>';
+            } else {
+                g1UserOrder.forEach((item, index) => {
+                    selectedDiv.innerHTML += `
+                        <span class="bg-blue-500/20 border border-blue-400 text-blue-300 text-xs font-bold px-3 py-1.5 rounded-lg flex items-center gap-2">
+                            <span>${index + 1}. ${item}</span>
+                        </span>
+                    `;
+                });
+            }
+
+            // Shuffle opsi yang belum dipilih
+            const remainingOptions = g1CorrectOrder.filter(item => !g1UserOrder.includes(item));
+            const optionsDiv = document.getElementById('g1-options');
+            optionsDiv.innerHTML = '';
+
+            remainingOptions.sort(() => Math.random() - 0.5).forEach(item => {
+                optionsDiv.innerHTML += `
+                    <button onclick="pickGame1('${item}')" class="bg-slate-800 hover:bg-slate-700 border border-slate-600 text-slate-200 text-xs font-semibold py-2 px-3 rounded-xl transition">
+                        + ${item}
+                    </button>
+                `;
+            });
+        }
+
+        function pickGame1(item) {
+            g1UserOrder.push(item);
+            renderGame1();
+        }
+
+        function resetGame1() {
+            g1UserOrder = [];
+            renderGame1();
+        }
+
+        function checkGame1() {
+            if (g1UserOrder.length < g1CorrectOrder.length) {
+                alert("Lengkapi semua 5 urutan organ terlebih dahulu!");
+                return;
+            }
+
+            let isCorrect = true;
+            for (let i = 0; i < g1CorrectOrder.length; i++) {
+                if (g1UserOrder[i] !== g1CorrectOrder[i]) {
+                    isCorrect = false;
+                    break;
+                }
+            }
+
+            if (isCorrect) {
+                totalScore += 100;
+                document.getElementById('display-score').innerHTML = `<i class="fa-solid fa-star text-xs"></i> ${totalScore}`;
+                alert("Hebat! Urutan Peredaran Darah Kecil Benar (+100 Poin)");
+                
+                document.getElementById('game-1').classList.add('hidden');
+                document.getElementById('game-2').classList.remove('hidden');
+                initGame2();
+            } else {
+                alert("Urutan masih kurang tepat. Coba periksa kembali ringkasan materi!");
+                resetGame1();
+            }
+        }
+
+        // 4. Inisialisasi Game 2
+        function initGame2() {
+            document.getElementById('g2-score').innerText = totalScore + " Poin";
+            renderSimulatorStep(1);
+        }
+
+        function renderSimulatorStep(step) {
+            const choicesDiv = document.getElementById('sim-choices');
+            choicesDiv.innerHTML = '';
+
+            if (step === 1) {
+                document.getElementById('sim-title').innerText = "Posisi: Bilik Kiri Jantung (Darah Kaya O2)";
+                document.getElementById('sim-desc').innerText = "Jalur pembuluh darah utama mana yang menghubungkan Bilik Kiri ke Seluruh Tubuh?";
+                
+                choicesDiv.innerHTML = `
+                    <button onclick="simChoice(true, 2)" class="bg-slate-800 hover:bg-red-600/30 border border-slate-700 hover:border-red-500 p-3 rounded-xl text-xs font-bold text-white transition">
+                        Aorta (Pembuluh Arteri Utama)
+                    </button>
+                    <button onclick="simChoice(false, 1)" class="bg-slate-800 hover:bg-blue-600/30 border border-slate-700 hover:border-blue-500 p-3 rounded-xl text-xs font-bold text-white transition">
+                        Arteri Pulmonalis
+                    </button>
+                `;
+            } else if (step === 2) {
+                document.getElementById('sim-title').innerText = "Posisi: Seluruh Tubuh (O2 dilepaskan, mengambil CO2)";
+                document.getElementById('sim-desc').innerText = "Darah sekarang kaya CO2. Pembuluh darah mana yang membawa kembali ke Serambi Kanan Jantung?";
+                
+                choicesDiv.innerHTML = `
+                    <button onclick="simChoice(true, 3)" class="bg-slate-800 hover:bg-blue-600/30 border border-slate-700 hover:border-blue-500 p-3 rounded-xl text-xs font-bold text-white transition">
+                        Vena Cava
+                    </button>
+                    <button onclick="simChoice(false, 2)" class="bg-slate-800 hover:bg-red-600/30 border border-slate-700 hover:border-red-500 p-3 rounded-xl text-xs font-bold text-white transition">
+                        Vena Pulmonalis
+                    </button>
+                `;
+            }
+        }
+
+        function simChoice(isCorrect, nextStep) {
+            if (isCorrect) {
+                if (nextStep === 3) {
+                    totalScore += 100;
+                    document.getElementById('display-score').innerHTML = `<i class="fa-solid fa-star text-xs"></i> ${totalScore}`;
+                    alert("Luar Biasa! Kamu berhasil menavigasi Sel Darah Merah pada Peredaran Darah Besar! (+100 Poin)");
+                    
+                    document.getElementById('game-2').classList.add('hidden');
+                    document.getElementById('game-3').classList.remove('hidden');
+                    initGame3();
+                } else {
+                    renderSimulatorStep(nextStep);
+                }
+            } else {
+                alert("Jalur salah! Perhatikan kandungan O2 / CO2 dan tujuan pembuluh darah!");
+            }
+        }
+
+        // 5. Inisialisasi Game 3
+        function initGame3() {
+            currentQuizIndex = 0;
+            renderQuiz();
+        }
+
+        function renderQuiz() {
+            const q = quizData[currentQuizIndex];
+            document.getElementById('quiz-progress').innerText = `${currentQuizIndex + 1} / ${quizData.length}`;
+            document.getElementById('quiz-question').innerText = q.q;
+
+            const optionsDiv = document.getElementById('quiz-options');
+            optionsDiv.innerHTML = '';
+
+            q.options.forEach((opt, idx) => {
+                optionsDiv.innerHTML += `
+                    <button onclick="answerQuiz(${idx})" class="w-full text-left bg-slate-800/80 hover:bg-emerald-600/20 border border-slate-700 hover:border-emerald-500 p-4 rounded-xl text-xs md:text-sm font-semibold text-slate-200 transition">
+                        ${String.fromCharCode(65 + idx)}. ${opt}
+                    </button>
+                `;
+            });
+        }
+
+        function answerQuiz(idx) {
+            if (idx === quizData[currentQuizIndex].answer) {
+                totalScore += 100;
+                document.getElementById('display-score').innerHTML = `<i class="fa-solid fa-star text-xs"></i> ${totalScore}`;
+            }
+
+            currentQuizIndex++;
+            if (currentQuizIndex < quizData.length) {
+                renderQuiz();
+            } else {
+                finishGame();
+            }
+        }
+
+        // 6. Selesai Game & Simpan ke Firebase
+        function finishGame() {
+            document.getElementById('game-3').classList.add('hidden');
+            document.getElementById('screen-result').classList.remove('hidden');
+
+            document.getElementById('result-group-text').innerText = `Selamat untuk ${currentGroup}! Anda menyelesaikan tantangan.`;
+            document.getElementById('final-score').innerText = totalScore;
+
+            // Simpan Skor ke Firebase Database
+            if (window.dbInstance && window.dbPush && window.dbRef) {
+                const scoresRef = window.dbRef(window.dbInstance, 'leaderboard');
+                window.dbPush(scoresRef, {
+                    group: currentGroup,
+                    score: totalScore,
+                    timestamp: new Date().toLocaleString('id-ID')
+                });
+            }
+        }
+
+        // 7. Sync Realtime Leaderboard dari Firebase
+        window.addEventListener('load', () => {
+            let checkInterval = setInterval(() => {
+                if (window.dbInstance && window.dbOnValue && window.dbRef) {
+                    clearInterval(checkInterval);
+                    const scoresRef = window.dbRef(window.dbInstance, 'leaderboard');
+                    
+                    window.dbOnValue(scoresRef, (snapshot) => {
+                        const data = snapshot.val();
+                        const miniBoard = document.getElementById('mini-leaderboard');
+                        const fullBoard = document.getElementById('full-leaderboard');
+
+                        if (!data) {
+                            if (miniBoard) miniBoard.innerHTML = '<p class="text-xs text-slate-500 italic">Belum ada skor tersimpan.</p>';
+                            if (fullBoard) fullBoard.innerHTML = '<p class="text-xs text-slate-500 italic">Belum ada skor tersimpan.</p>';
+                            return;
+                        }
+
+                        // Convert data ke Array & Urutkan berdasarkan Skor Tertinggi
+                        const list = Object.values(data).sort((a, b) => b.score - a.score);
+
+                        let htmlContent = '';
+                        list.slice(0, 5).forEach((item, index) => {
+                            htmlContent += `
+                                <div class="flex justify-between items-center bg-slate-800/60 p-2.5 rounded-xl border border-slate-700/60">
+                                    <div class="flex items-center gap-2">
+                                        <span class="w-6 h-6 rounded-full ${index === 0 ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/40' : 'bg-slate-700 text-slate-300'} text-xs font-bold flex items-center justify-center">
+                                            ${index + 1}
+                                        </span>
+                                        <span class="font-semibold text-slate-200 text-xs">${item.group}</span>
+                                    </div>
+                                    <span class="font-extrabold text-yellow-400 text-xs">${item.score} Poin</span>
+                                </div>
+                            `;
+                        });
+
+                        if (miniBoard) miniBoard.innerHTML = htmlContent;
+                        if (fullBoard) fullBoard.innerHTML = htmlContent;
+                    });
+                }
+            }, 500);
+        });
+    </script>
+</body>
+</html>
